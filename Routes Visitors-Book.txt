@@ -1,0 +1,15 @@
+Route::prefix('front-desk/postal-dispatch')->name('front-desk.postal-dispatch.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\PostalDispatchController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\PostalDispatchController::class, 'store'])->name('store');
+        Route::get('{postalDispatch}/edit', [App\Http\Controllers\Admin\PostalDispatchController::class, 'edit'])->name('edit');
+        Route::put('{postalDispatch}', [App\Http\Controllers\Admin\PostalDispatchController::class, 'update'])->name('update');
+        Route::delete('{postalDispatch}', [App\Http\Controllers\Admin\PostalDispatchController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('front-desk/visitors-book')->name('front-desk.visitors-book.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\VisitorBookController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Admin\VisitorBookController::class, 'store'])->name('store');
+        Route::get('{visitor}/edit', [App\Http\Controllers\Admin\VisitorBookController::class, 'edit'])->name('edit');
+        Route::put('{visitor}', [App\Http\Controllers\Admin\VisitorBookController::class, 'update'])->name('update');
+        Route::delete('{visitor}', [App\Http\Controllers\Admin\VisitorBookController::class, 'destroy'])->name('destroy');
+    });

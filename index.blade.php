@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
-@section('title', 'Postal Receive')
+@section('title', 'Visitors Book')
 
 @section('content')
 <div class="main">
     <!-- MAIN CONTENT -->
     <div class="main-content">
         <div class="container-fluid">
-            <h3 class="page-title">Postal Receive</h3>
+            <h3 class="page-title">Visitors Book</h3>
             <div class="row">
                 <div class="col-md-12">
                     <!-- PANEL NO CONTROLS -->
@@ -15,21 +15,26 @@
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <button type="button" class="btn btn-primary" id="addPostalReceiveBtn">
-                                        <i class="fa fa-plus"></i> Add Postal Receive
+                                    <button type="button" class="btn btn-primary" id="addVisitorsBtn">
+                                        <i class="fa fa-plus"></i> Add Visitor
                                     </button>
                                     
                                     <div class="mt-3">
-                                        <table class="table table-striped" id="postalReceiveTable">
+                                        <table class="table table-striped" id="visitorsBookTable">
                                             <thead>
                                                 <tr>
                                                     <th>ID</th>
-                                                    <th>Package Name</th>
-                                                    <th>From</th>
-                                                    <th>To</th>
-                                                    <th>Reference Number</th>
-                                                    <th>Date Received</th>
+                                                    <th>Purpose</th>
+                                                    <th>Meeting With</th>
+                                                    <th>Visitor Name</th>
+                                                    <th>Phone</th>
+                                                    <th>Number of People</th>
+                                                    <th>Date</th>
+                                                    <th>In Time</th>
+                                                    <th>Out Time</th>
                                                     <th>Actions</th>
+
+                                                    
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -48,16 +53,34 @@
 </div>
 <!-- END MAIN CONTENT -->
 
-@include('admin.front-desk.postal-receive._form')
+@include('admin.front-desk.visitors-book._form')
 
 @endsection
 
 @push('styles')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.7/dist/css/tempus-dominus.min.css"/>
+
 @endpush
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.7/dist/js/tempus-dominus.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    new tempusDominus.TempusDominus(document.getElementById('in_time'), {
+        display: {
+            components: {
+                calendar: false,  // disable calendar
+                hours: true,
+                minutes: true,
+                seconds: false
+            }
+        }
+    });
+});
+</script>
+
 <script>
 
     $(document).ready(function() {
@@ -67,17 +90,26 @@
             }
         });
 
-        let table = $('#postalReceiveTable').DataTable({
+        // Initialize datepicker
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
+
+        let table = $('#visitorsBookTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: "{{ route('admin.front-desk.postal-receive.index') }}",
+            ajax: "{{ route('admin.front-desk.visitors-book.index') }}",
             columns: [
-                {data: 'id', name: 'id'},
-                {data: 'package_name', name: 'package_name'},
-                {data: 'from_title', name: 'from_title'},
-                {data: 'to_title', name: 'to_title'},
-                {data: 'reference_number', name: 'reference_number'},
-                {data: 'date_received', name: 'date_received'},
+                { data: 'id', name: 'id' },
+                { data: 'purpose', name: 'purpose' },
+                { data: 'meeting_with', name: 'meeting_with' },
+                { data: 'visitor_name', name: 'visitor_name' },
+                { data: 'phone', name: 'phone' },
+                { data: 'number_of_person', name: 'number_of_people' },
+                { data: 'date', name: 'date' },
+                { data: 'in_time', name: 'in_time' },
+                { data: 'out_time', name: 'out_time' },
                 {
                     data: 'actions',
                     name: 'actions',
@@ -104,13 +136,13 @@
         }
 
         // Open modal for Add
-        $('#addPostalReceiveBtn').click(function() {
-            $('#postalReceiveForm')[0].reset();
-            $('#postalReceive_id').val('');
-            $('#postalReceiveModalTitle').text('Add Postal Receive');
+        $('#addVisitorsBtn').click(function() {
+            $('#visitorsBookForm')[0].reset();
+            $('#visitorsBook_id').val('');
+            $('#visitorsBookModalTitle').text('Add Visitor');
             $('.form-control').removeClass('is-invalid');
             $('.invalid-feedback').text('');
-            $('#postalReceiveForm').attr('action', '{{ route("admin.front-desk.postal-receive.store") }}');
+            $('#visitorsBookForm').attr('action', '{{ route("admin.front-desk.visitors-book.store") }}');
             
             // Re-initialize datepickers after form reset
             $('.datepicker').datepicker({
@@ -118,7 +150,7 @@
                 autoclose: true
             });
             
-            $('#postalReceiveModal').modal('show');
+            $('#visitorsBookModal').modal('show');
         });
 
         // Open modal for Edit
@@ -131,37 +163,31 @@
                 type: 'GET',
                 success: function(response) {
                     if (response.data) {
-                        const postal = response.data;
-                        fillForm(postal, '#postalReceiveForm');
-                        $('#postalReceive_id').val(postal.id);
-                        $('#postalReceiveModalTitle').text('Edit Postal Receive');
+                        const log = response.data;
+                        fillForm(log, '#visitorsBookForm');
+                        $('#visitorsBook_id').val(log.id);
+                        $('#visitorsBookModalTitle').text('Edit Visitor');
                         $('.form-control').removeClass('is-invalid is-valid');
                         $('.invalid-feedback').text('');
-                        $('#postalReceiveForm').attr('action', response.url);
+                        $('#visitorsBookForm').attr('action', response.url);
                         
-                        // Re-initialize datepickers
-                        $('.datepicker').datepicker({
-                            format: 'yyyy-mm-dd',
-                            autoclose: true
-                        });
-                        
-                        $('#postalReceiveModal').modal('show');
+                        $('#visitorsBookModal').modal('show');
                     } else {
-                        toastr.error('Postal receive not found');
+                        toastr.error('Sorry. Visitor not found.');
                     }
                 },
                 error: function(xhr) {
-                    toastr.error('Error loading postal receive data');
+                    toastr.error('Error fetching visitor data. Please try again.');
                 }
             });
         });
 
         // Submit Add/Edit
-        $('#postalReceiveForm').submit(function(e) {
+        $('#visitorsBookForm').submit(function(e) {
             e.preventDefault();
-            let id = $('#postalReceive_id').val();
+            let id = $('#visitorsBook_id').val();
             let method = id ? 'PUT' : 'POST';
-            let url = $('#postalReceiveForm').attr('action');
+            let url = $('#visitorsBookForm').attr('action');
             
             $('.form-control').removeClass('is-invalid');
             $('.invalid-feedback').text('');
@@ -171,7 +197,7 @@
                 type: method,
                 data: $(this).serialize(),
                 success: function(response) {
-                    $('#postalReceiveModal').modal('hide');
+                    $('#visitorsBookModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 },
@@ -183,17 +209,17 @@
                             $('#' + key).siblings('.invalid-feedback').text(value[0]);
                         });
                     } else {
-                        toastr.error(xhr.responseJSON?.message || 'Error saving postal receive');
+                        toastr.error(xhr.responseJSON?.message || 'Sorry. An error occurred while saving the visitor.');
                     }
-                }
+                }        
             });
         });
 
-        // Delete Postal Receive
+        // Delete Phone Call Log
         $(document).on('click', '.delete-btn', function(e) {
             e.preventDefault();
             
-            if (!confirm('Are you sure you want to delete this postal receive?')) {
+            if (!confirm('You are about to delete a visitor record. This action cannot be undone. Are you sure you want to proceed?')) {
                 return;
             }
             
@@ -209,7 +235,7 @@
                     toastr.success(response.message);
                 },
                 error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Error deleting postal receive');
+                    toastr.error(xhr.responseJSON?.message || 'Error deleting visitor record');
                 }
             });
         });
