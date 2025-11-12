@@ -1,0 +1,24 @@
+		Route::prefix('admin')->name('admin.')->group(function () {
+		// Enquiries Resource Routes
+        Route::resource('enquiries', \App\Http\Controllers\Admin\EnquiryController::class);
+
+        // Additional Enquiry Routes
+        Route::get('enquiries/{enquiry}/followup', [\App\Http\Controllers\Admin\EnquiryController::class, 'followup'])
+            ->name('enquiries.followup');
+        Route::post('enquiries/{enquiry}/followup', [\App\Http\Controllers\Admin\EnquiryController::class, 'storeFollowup'])
+            ->name('enquiries.followup.store');
+
+        Route::get('enquiries/followups/data', [EnquiryController::class, 'followupsData'])
+            ->name('enquiries.followups.index');
+        Route::get('enquiries/followups/data', [EnquiryController::class, 'followupsData'])
+            ->name('enquiries.followups.data');
+            // In your admin routes group
+        Route::resource('enquiries', \App\Http\Controllers\Admin\EnquiryController::class);
+        // This automatically includes: GET /admin/enquiries/{enquiry} → admin.enquiries.show
+
+        // Follow-up management routes
+        // Add this line:
+        Route::get('enquiries/followups/{followup}/edit', [EnquiryController::class, 'editFollowup'])->name('enquiries.followups.edit');
+        Route::put('enquiries/followups/{followup}', [EnquiryController::class, 'updateFollowup'])->name('enquiries.followups.update');
+        Route::delete('enquiries/followups/{followup}', [EnquiryController::class, 'destroyFollowup'])->name('enquiries.followups.destroy');
+		});
