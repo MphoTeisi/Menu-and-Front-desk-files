@@ -1,13 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Visitors Book')
-
 @section('content')
 <div class="main">
     <!-- MAIN CONTENT -->
     <div class="main-content">
         <div class="container-fluid">
-            <h3 class="page-title">Visitors Book</h3>
+            <h3 class="page-title">Menu Management</h3>
             <div class="row">
                 <div class="col-md-12">
                     <!-- PANEL NO CONTROLS -->
@@ -15,31 +13,55 @@
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <button type="button" class="btn btn-primary" id="addVisitorsBtn">
-                                        <i class="fa fa-plus"></i> Add Visitor
-                                    </button>
-                                    
-                                    <div class="mt-3">
-                                        <table class="table table-striped" id="visitorsBookTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Purpose</th>
-                                                    <th>Meeting With</th>
-                                                    <th>Visitor Name</th>
-                                                    <th>Phone</th>
-                                                    <th>Number of People</th>
-                                                    <th>Date</th>
-                                                    <th>In Time</th>
-                                                    <th>Out Time</th>
-                                                    <th>Actions</th>
+                                    <!-- View Toggle Buttons -->
+                                    <div class="btn-group mb-3" role="group">
+                                        <button type="button" class="btn btn-default active" id="table-view-btn">
+                                            <i class="fa fa-list"></i> Table View
+                                        </button>
+                                        <button type="button" class="btn btn-default" id="tree-view-btn">
+                                            <i class="fa fa-sitemap"></i> Tree View (Drag & Drop)
+                                        </button>
+                                    </div>
+                                        <button type="button" class="btn btn-primary" id="addMenuBtn">
+                                                <i class="fa fa-plus"></i> Add Menu
+                                        </button>
+                                    <div class="tab-content">
+                                        <!-- TABLE VIEW -->
+                                        <div id="table-view">
+                                            <table class="table table-striped" id="menusTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Name</th>
+                                                        <th>Route</th>
+                                                        <th>Icon</th>
+                                                        <th>Order</th>
+                                                        <th>Parent</th>
+                                                        <th>Guard</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                                    
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
+                                        <!-- TREE VIEW (Drag & Drop) -->
+                                        <div id="tree-view" style="display: none;">
+                                            <div class="alert alert-info">
+                                                <i class="fa fa-hand-rock-o"></i> <strong>Drag and drop</strong> menus to reorder them. Changes are saved automatically. You can also drag child menus between parents.
+                                            </div>
+                                            <div id="menu-tree" class="menu-tree">
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                     <span class="handle" style="cursor: grab;">☰</span>
+                                                </div>
+                                                <div class="text-center" style="padding: 100px;">
+                                                    <i class="fa fa-spinner fa-spin fa-3x"></i>
+                                                    <p>Loading menus...</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -53,35 +75,35 @@
 </div>
 <!-- END MAIN CONTENT -->
 
-@include('admin.front-desk.visitors-book._form')
+@include('admin.menus._form')
+@include('admin.menus._permissions')
 
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.7/dist/css/tempus-dominus.min.css"/>
-
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 @endpush
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@eonasdan/tempus-dominus@6.9.7/dist/js/tempus-dominus.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    new tempusDominus.TempusDominus(document.getElementById('in_time'), {
-        display: {
-            components: {
-                calendar: false,  // disable calendar
-                hours: true,
-                minutes: true,
-                seconds: false
-            }
-        }
-    });
-});
-</script>
-
-<script>
+    // TOASTER AND NOTIFICATION SETUP
+    toastr.options = {
+        closeButton: true,
+        newestOnTop: false,
+        progressBar: true,
+        positionClass: "toast-top-center",
+        preventDuplicates: false,
+        onclick: null,
+        showDuration: "3000",
+        hideDuration: "8000",
+        timeOut: "10000",
+        extendedTimeOut: "8000",
+        showEasing: "swing",
+        hideEasing: "linear",
+        showMethod: "fadeIn",
+        hideMethod: "fadeOut",
+    };
 
     $(document).ready(function() {
         $.ajaxSetup({
@@ -90,26 +112,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Initialize datepicker
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true
-        });
-
-        let table = $('#visitorsBookTable').DataTable({
+        let table = $('#menusTable').DataTable({
             processing: true,
             serverSide: true,
-            ajax: "{{ route('admin.front-desk.visitors-book.index') }}",
+            ajax: "{{ route('admin.menus.index') }}",
             columns: [
-                { data: 'id', name: 'id' },
-                { data: 'purpose', name: 'purpose' },
-                { data: 'meeting_with', name: 'meeting_with' },
-                { data: 'visitor_name', name: 'visitor_name' },
-                { data: 'phone', name: 'phone' },
-                { data: 'number_of_person', name: 'number_of_people' },
-                { data: 'date', name: 'date' },
-                { data: 'in_time', name: 'in_time' },
-                { data: 'out_time', name: 'out_time' },
+                {data: 'id', name: 'id'},
+                {data: 'name', name: 'name'},
+                {data: 'route', name: 'route'},
+                {data: 'icon', name: 'icon'},
+                {data: 'order', name: 'order'},
+                {data: 'parent_name', name: 'parent.name'},
+                {data: 'guard_name', name: 'guard_name'},
+                {data: 'status', name: 'status'},
                 {
                     data: 'actions',
                     name: 'actions',
@@ -119,12 +134,157 @@ document.addEventListener('DOMContentLoaded', function () {
             ]
         });
 
+        // View toggle functionality
+        $('#table-view-btn').click(function() {
+            $('#table-view').show();
+            $('#tree-view').hide();
+            $(this).addClass('active');
+            $('#tree-view-btn').removeClass('active');
+        });
+
+        $('#tree-view-btn').click(function() {
+            $('#table-view').hide();
+            $('#tree-view').show();
+            $(this).addClass('active');
+            $('#table-view-btn').removeClass('active');
+            loadMenuTree();
+        });
+
+        // Load menu tree for drag and drop
+        function loadMenuTree() {
+            $.get('{{ route("admin.menus.tree") }}', function(response) {
+                if (response.success) {
+                    renderMenuTree(response.menus);
+                    initSortable();
+                } else {
+                    $('#menu-tree').html('<div class="alert alert-warning">No menus found</div>');
+                }
+            }).fail(function() {
+                $('#menu-tree').html('<div class="alert alert-danger">Error loading menus</div>');
+            });
+        }
+
+        // Render menu tree
+        function renderMenuTree(menus) {
+            let html = '<ul class="menu-tree">';
+
+            menus.forEach(function(menu) {
+                html += renderMenuItem(menu);
+            });
+
+            html += '</ul>';
+            $('#menu-tree').html(html);
+        }
+
+        // Render single menu item
+        function renderMenuItem(menu) {
+            let html = `
+                <li class="menu-item list-group-item" data-id="${menu.id}" data-parent="${menu.parent_id || ''}">
+                    <div class="menu-item-header">
+
+                        <div class="menu-item-actions pull-right">
+                            <button class="btn btn-primary btn-xs edit-btn" data-url="${menu.edit_url}" title="Edit">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                            <button class="btn btn-warning btn-xs permissions-btn"
+                                    data-url="${menu.permissions_url}"
+                                    data-name="${menu.name}"
+                                    title="Permissions">
+                                <i class="fa fa-lock"></i>
+                            </button>
+                            <button class="btn btn-danger btn-xs delete-btn" data-url="${menu.delete_url}" title="Delete">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+
+                        <div class="menu-item-info">
+                            <span class="drag-handle">
+                                <i class="fa fa-bars"></i>
+                            </span>
+                            <i class="${menu.icon || 'fa fa-circle-o'} menu-item-icon" class="menu-item-name">${menu.name}</i>
+
+                        </div>
+
+                    </div>
+                    ${menu.children && menu.children.length > 0 ? renderChildren(menu.children) : ''}
+                </li>
+            `;
+            return html;
+        }
+
+        // Render children
+        function renderChildren(children) {
+            let html = '<ul class="menu-children">';
+            children.forEach(function(child) {
+                html += renderMenuItem(child);
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        // Initialize sortable
+        function initSortable() {
+            $('.menu-tree, .menu-children').sortable({
+                handle: '.drag-handle',
+                placeholder: 'ui-sortable-placeholder',
+                connectWith: '.menu-tree, .menu-children',
+                tolerance: 'pointer',
+                cursor: 'move',
+                update: function(event, ui) {
+                    saveOrder();
+                }
+            });
+        }
+
+        // Save menu order
+        function saveOrder() {
+            let order = [];
+
+            // Get parent menus
+            $('.menu-tree > .menu-item').each(function(index) {
+                let menuId = $(this).data('id');
+                order.push({
+                    id: menuId,
+                    parent_id: null,
+                    order: index + 1
+                });
+
+                // Get children
+                $(this).find('.menu-children > .menu-item').each(function(childIndex) {
+                    order.push({
+                        id: $(this).data('id'),
+                        parent_id: menuId,
+                        order: childIndex + 1
+                    });
+                });
+            });
+
+            $.ajax({
+                url: '{{ route("admin.menus.reorder") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    order: order
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Menu order updated successfully');
+                        table.ajax.reload(null, false); // Reload table without resetting pagination
+                    }
+                },
+                error: function() {
+                    toastr.error('Failed to update menu order');
+                    loadMenuTree(); // Reload tree on error
+                }
+            });
+        }
+
         // Helper function to fill form fields
         function fillForm(data, formId) {
             const form = $(formId);
             $.each(data, function(key, value) {
                 let field = $('[name="' + key + '"]');
-                
+
                 if (field.is(':checkbox')) {
                     field.prop('checked', !!value);
                 } else if (field.is(':radio')) {
@@ -136,24 +296,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Open modal for Add
-        $('#addVisitorsBtn').click(function() {
-            $('#visitorsBookForm')[0].reset();
-            $('#visitorsBook_id').val('');
-            $('#visitorsBookModalTitle').text('Add Visitor');
+        $('#addMenuBtn').click(function() {
+            $('#menuForm')[0].reset();
+            $('#menu_id').val('');
+            $('#menuModalTitle').text('Add Menu');
             $('.form-control').removeClass('is-invalid');
             $('.invalid-feedback').text('');
-            $('#visitorsBookForm').attr('action', '{{ route("admin.front-desk.visitors-book.store") }}');
-            
-            // Re-initialize datepickers after form reset
-            $('.datepicker').datepicker({
-                format: 'yyyy-mm-dd',
-                autoclose: true
-            });
-            
-            $('#visitorsBookModal').modal('show');
+            $('#menuForm').attr('action','{{ route("admin.menus.store") }}');
+            $('#menuModal').modal('show');
         });
 
-        // Open modal for Edit
+        // Open modal for Edit (delegated for tree view)
         $(document).on('click', '.edit-btn', function(e) {
             e.preventDefault();
             let url = $(this).data('url');
@@ -162,43 +315,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 url: url,
                 type: 'GET',
                 success: function(response) {
-                    if (response.data) {
-                        const log = response.data;
-                        fillForm(log, '#visitorsBookForm');
-                        $('#visitorsBook_id').val(log.id);
-                        $('#visitorsBookModalTitle').text('Edit Visitor');
+                    if (response.menu) {
+                        const menu = response.menu;
+                        fillForm(menu, '#menuForm');
+                        $('#menu_id').val(menu.id);
+                        $('#menuModalTitle').text('Edit Menu');
                         $('.form-control').removeClass('is-invalid is-valid');
                         $('.invalid-feedback').text('');
-                        $('#visitorsBookForm').attr('action', response.url);
-                        
-                        $('#visitorsBookModal').modal('show');
+                        $('#menuForm').attr('action', response.url);
+
+                        $('#menuModal').modal('show');
                     } else {
-                        toastr.error('Sorry. Visitor not found.');
+                        toastr.error('Menu not found');
                     }
                 },
                 error: function(xhr) {
-                    toastr.error('Error fetching visitor data. Please try again.');
+                    toastr.error('Error loading menu data');
                 }
             });
         });
 
         // Submit Add/Edit
-        $('#visitorsBookForm').submit(function(e) {
+        $('#menuForm').submit(function(e) {
             e.preventDefault();
-            let id = $('#visitorsBook_id').val();
+            let id = $('#menu_id').val();
             let method = id ? 'PUT' : 'POST';
-            let url = $('#visitorsBookForm').attr('action');
-            
+            let url = $('#menuForm').attr('action');
+
             $('.form-control').removeClass('is-invalid');
             $('.invalid-feedback').text('');
-            
+
             $.ajax({
                 url: url,
                 type: method,
                 data: $(this).serialize(),
                 success: function(response) {
-                    $('#visitorsBookModal').modal('hide');
+                    $('#menuModal').modal('hide');
                     table.ajax.reload();
+                    if ($('#tree-view').is(':visible')) {
+                        loadMenuTree();
+                    }
                     toastr.success(response.message);
                 },
                 error: function(xhr) {
@@ -209,20 +365,20 @@ document.addEventListener('DOMContentLoaded', function () {
                             $('#' + key).siblings('.invalid-feedback').text(value[0]);
                         });
                     } else {
-                        toastr.error(xhr.responseJSON?.message || 'Sorry. An error occurred while saving the visitor.');
+                        toastr.error(xhr.responseJSON?.message || 'Error saving menu');
                     }
-                }        
+                }
             });
         });
 
-        // Delete Phone Call Log
+        // Delete Menu (delegated for tree view)
         $(document).on('click', '.delete-btn', function(e) {
             e.preventDefault();
-            
-            if (!confirm('You are about to delete a visitor record. This action cannot be undone. Are you sure you want to proceed?')) {
+
+            if (!confirm('Are you sure you want to delete this menu?')) {
                 return;
             }
-            
+
             let url = $(this).data('url');
             $.ajax({
                 url: url,
@@ -232,10 +388,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 success: function(response) {
                     table.ajax.reload();
+                    if ($('#tree-view').is(':visible')) {
+                        loadMenuTree();
+                    }
                     toastr.success(response.message);
                 },
                 error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Error deleting visitor record');
+                    toastr.error(xhr.responseJSON?.message || 'Error deleting menu');
                 }
             });
         });

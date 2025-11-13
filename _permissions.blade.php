@@ -27,7 +27,7 @@
                                         <div class="invalid-feedback"></div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="role_id">Role <span class="text-danger">*</span></label>
@@ -37,7 +37,7 @@
                                         <div class="invalid-feedback"></div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>&nbsp;</label>
@@ -56,7 +56,7 @@
                 <div class="panel panel-default" style="width: 100%; margin: 0; padding: 0;">
                     <div class="panel-heading">
                         <h4 class="panel-title">
-                            Assigned Permissions 
+                            Assigned Permissions
                             <span class="badge" id="permissionCount">0</span>
                         </h4>
                     </div>
@@ -90,41 +90,41 @@
 $(document).ready(function() {
     let currentMenuId = null;
     let permissionsTable = null;
-    
+
     // Open Permissions Modal (delegated for tree view)
     $(document).on('click', '.permissions-btn', function(e) {
         e.preventDefault();
         let url = $(this).data('url');
         let menuName = $(this).data('name');
-        
+
         $('#permissionModalTitle').text(`Permissions for: ${menuName}`);
-        
+
         $.ajax({
             url: url,
             type: 'GET',
             success: function(response) {
                 if (response.success) {
                     currentMenuId = response.menu.id;
-                    
+
                     // Populate roles dropdown
                     let roleOptions = '<option value="">Select Role</option>';
                     $.each(response.roles, function(id, name) {
                         roleOptions += `<option value="${id}">${name}</option>`;
                     });
                     $('#role_id').html(roleOptions);
-                    
+
                     // Populate permissions dropdown
                     let permissionOptions = '<option value="">Select Permission</option>';
                     $.each(response.permissions, function(id, name) {
                         permissionOptions += `<option value="${id}">${name}</option>`;
                     });
                     $('#permission_id').html(permissionOptions);
-                    
+
                     // Initialize/Reinitialize permissions table
                     if (permissionsTable) {
                         permissionsTable.destroy();
                     }
-                    
+
                     permissionsTable = $('#permissionsTable').DataTable({
                         data: response.assigned_permissions,
                         columns: [
@@ -141,7 +141,7 @@ $(document).ready(function() {
                                 orderable: false,
                                 searchable: false,
                                 render: function(data) {
-                                    return `<button class="btn btn-danger btn-sm delete-permission-btn" 
+                                    return `<button class="btn btn-danger btn-sm delete-permission-btn"
                                                 data-id="${data}"
                                                 data-url="{{ url('admin/menu-permissions') }}/${data}">
                                         <i class="fa fa-trash"></i> Remove
@@ -155,7 +155,7 @@ $(document).ready(function() {
                         pageLength: 10,
                         order: [[0, 'asc']]
                     });
-                    
+
                     $('#permissionModal').modal('show');
                 }
             },
@@ -168,10 +168,10 @@ $(document).ready(function() {
     // Assign Permission
     $('#permissionForm').submit(function(e) {
         e.preventDefault();
-        
+
         $('.form-control').removeClass('is-invalid');
         $('.invalid-feedback').text('');
-        
+
         $.ajax({
             url: '{{ route("admin.menu-permissions.store") }}',
             type: 'POST',
@@ -184,7 +184,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     $('#permissionForm')[0].reset();
-                    
+
                     if (permissionsTable) {
                         permissionsTable.row.add(response.permission).draw();
                         updatePermissionCount();
@@ -209,14 +209,14 @@ $(document).ready(function() {
     // Delete Permission (delegated)
     $(document).on('click', '.delete-permission-btn', function(e) {
         e.preventDefault();
-        
+
         if (!confirm('Are you sure you want to remove this permission?')) {
             return;
         }
-        
+
         let url = $(this).data('url');
         let row = $(this).closest('tr');
-        
+
         $.ajax({
             url: url,
             type: 'DELETE',
